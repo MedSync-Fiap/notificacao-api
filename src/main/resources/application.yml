@@ -1,0 +1,109 @@
+spring:
+  application:
+    name: medsync-notificacao-service
+  
+  profiles:
+    active: dev
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: medsync
+    password: medsync
+    virtual-host: /medsync
+  
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8082
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging
+logging:
+  level:
+    com.medsync.notificacao: DEBUG
+    org.springframework.amqp: INFO
+    org.springframework.mail: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+
+# App Properties
+app:
+  name: medsync-notificacao-service
+  version: 1.0.0
+  rabbitmq:
+    exchange-notificacoes: ex_notificacoes
+    queue-notificacoes: q_notificacoes_consultas
+    queue-notificacoes-cliente: q_notificacoes_cliente
+    routing-key-notificacoes: consulta.notificacao
+    routing-key-cliente: notificacao.cliente.*
+  
+  notificacao:
+    lembrete-horas: [24, 2, 1]  # Horas antes da consulta para enviar lembrete
+    template-path: classpath:/templates/email/
+  
+  # URLs dos outros microsserviços
+  services:
+    agendamento:
+      url: http://localhost:8080  # Serviço de Agendamento
+    historico:
+      url: http://localhost:8081  # Serviço de Histórico
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+  
+  mail:
+    host: localhost
+    port: 1025
+    username: 
+    password: 
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+logging:
+  level:
+    com.medsync.notificacao: DEBUG
+    org.springframework.amqp: DEBUG
+
+---
+# Production Profile  
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+logging:
+  level:
+    com.medsync.notificacao: INFO
+    org.springframework.amqp: WARN

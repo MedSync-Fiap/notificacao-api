@@ -1,0 +1,17 @@
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/application/services/EmailService.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/infrastructure/events/NotificacaoEventListener.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/infrastructure/config/HttpClientConfig.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/presentation/dto/NotificacaoResponse.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/infrastructure/config/OpenApiConfig.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/NotificacaoApplication.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/presentation/controllers/NotificacaoController.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/presentation/dto/EnviarNotificacaoRequest.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/application/services/NotificacaoTemplateService.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/presentation/dto/NotificacaoRequest.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/infrastructure/clients/CadastroServiceClient.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/application/services/NotificacaoService.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/infrastructure/events/dto/NotificacaoConsultaPayload.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/domain/events/ConsultaNotificacaoEvent.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/presentation/dto/ApiResponse.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/presentation/dto/ApiResponseDto.java
+/Users/arthurgarcia/Documents/GitHub/notificacao-api/src/main/java/com/medsync/notificacao/infrastructure/config/RabbitMQConfig.java
