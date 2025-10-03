@@ -1,8 +1,8 @@
 package com.medsync.notificacao.infrastructure.events;
 
 import com.medsync.notificacao.application.services.NotificacaoService;
-import com.medsync.notificacao.domain.events.ConsultaNotificacaoEvent;
-import com.medsync.notificacao.infrastructure.events.dto.NotificacaoConsultaPayload;
+import com.medsync.notificacao.domain.events.ConsultaCriadaNotificacaoEvent;
+import com.medsync.notificacao.domain.events.ConsultaEditadaNotificacaoEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -28,36 +28,22 @@ public class NotificacaoEventListener {
             logger.info("Recebida mensagem de notificação: {}", messageBody);
             logger.debug("Headers da mensagem: {}", message.getMessageProperties().getHeaders());
             
-            // Tentar deserializar a mensagem
-            NotificacaoConsultaPayload payload = parseMessage(messageBody);
+            // Tentar deserializar a mensagem baseado no tipo de evento
+            String evento = extractEventType(messageBody);
             
-            logger.info("Processando notificação para consulta: {}", payload.consultaId());
-            
-            // Converter o payload para o evento de domínio
-            ConsultaNotificacaoEvent evento = new ConsultaNotificacaoEvent(
-                payload.consultaId(),
-                payload.pacienteId(),
-                payload.medicoId(),
-                payload.criadoPorId(),
-                payload.dataHora(),
-                payload.status(),
-                payload.observacoes(),
-                payload.tipoEvento(),
-                payload.timestamp()
-            );
-            
-            // Processar baseado no tipo de evento
-            switch (payload.tipoEvento()) {
-                case "CRIADA" -> {
-                    logger.info("Processando evento de consulta criada: {}", evento.consultaId());
-                    notificacaoService.processarConsultaCriada(evento);
+            switch (evento) {
+                case "consulta_criada_notificacao" -> {
+                    ConsultaCriadaNotificacaoEvent eventoCriada = parseConsultaCriada(messageBody);
+                    logger.info("Processando evento de consulta criada: {}", eventoCriada.consultaId());
+                    notificacaoService.processarConsultaCriada(eventoCriada);
                 }
-                case "EDITADA" -> {
-                    logger.info("Processando evento de consulta editada: {}", evento.consultaId());
-                    notificacaoService.processarConsultaEditada(evento);
+                case "consulta_editada_notificacao" -> {
+                    ConsultaEditadaNotificacaoEvent eventoEditada = parseConsultaEditada(messageBody);
+                    logger.info("Processando evento de consulta editada: {}", eventoEditada.consultaId());
+                    notificacaoService.processarConsultaEditada(eventoEditada);
                 }
                 default -> {
-                    logger.warn("Tipo de evento não reconhecido: {}", payload.tipoEvento());
+                    logger.warn("Tipo de evento não reconhecido: {}", evento);
                 }
             }
             
@@ -67,16 +53,38 @@ public class NotificacaoEventListener {
         }
     }
     
-    private NotificacaoConsultaPayload parseMessage(String messageBody) {
+    private String extractEventType(String messageBody) {
         try {
-            // Usar Jackson diretamente para deserializar
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode jsonNode = mapper.readTree(messageBody);
+            return jsonNode.get("evento").asText();
+        } catch (Exception e) {
+            logger.error("Erro ao extrair tipo de evento da mensagem: {}", messageBody, e);
+            throw new RuntimeException("Falha ao extrair tipo de evento", e);
+        }
+    }
+    
+    private ConsultaCriadaNotificacaoEvent parseConsultaCriada(String messageBody) {
+        try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
             mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            return mapper.readValue(messageBody, NotificacaoConsultaPayload.class);
+            return mapper.readValue(messageBody, ConsultaCriadaNotificacaoEvent.class);
         } catch (Exception e) {
-            logger.error("Erro ao fazer parse da mensagem: {}", messageBody, e);
-            throw new RuntimeException("Falha ao deserializar mensagem", e);
+            logger.error("Erro ao fazer parse da mensagem de consulta criada: {}", messageBody, e);
+            throw new RuntimeException("Falha ao deserializar mensagem de consulta criada", e);
+        }
+    }
+    
+    private ConsultaEditadaNotificacaoEvent parseConsultaEditada(String messageBody) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+            mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            return mapper.readValue(messageBody, ConsultaEditadaNotificacaoEvent.class);
+        } catch (Exception e) {
+            logger.error("Erro ao fazer parse da mensagem de consulta editada: {}", messageBody, e);
+            throw new RuntimeException("Falha ao deserializar mensagem de consulta editada", e);
         }
     }
 }

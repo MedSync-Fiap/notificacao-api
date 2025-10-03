@@ -87,4 +87,5 @@ public class EmailService {
             logger.error("Erro ao enviar email de lembrete: {}", notificacao.consultaId(), e);
         }
     }
+    
 }

@@ -1,6 +1,7 @@
 package com.medsync.notificacao.application.services;
 
-import com.medsync.notificacao.infrastructure.events.dto.NotificacaoConsultaPayload;
+import com.medsync.notificacao.domain.events.ConsultaCriadaNotificacaoEvent;
+import com.medsync.notificacao.domain.events.ConsultaEditadaNotificacaoEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -18,24 +19,28 @@ public class NotificacaoTemplateService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     /**
-     * Gera o template de notificação baseado no tipo de evento
+     * Gera o template de notificação para consulta criada
      */
-    public NotificacaoTemplate gerarTemplate(NotificacaoConsultaPayload payload) {
-        logger.debug("Gerando template para evento: {} - Consulta: {}", payload.tipoEvento(), payload.consultaId());
-        
-        return switch (payload.tipoEvento()) {
-            case "CRIADA" -> gerarTemplateConsultaCriada(payload);
-            case "EDITADA" -> gerarTemplateConsultaEditada(payload);
-            case "CANCELADA" -> gerarTemplateConsultaCancelada(payload);
-            case "LEMBRETE" -> gerarTemplateLembrete(payload);
-            default -> gerarTemplateGenerico(payload);
-        };
+    public NotificacaoTemplate gerarTemplateConsultaCriada(ConsultaCriadaNotificacaoEvent evento) {
+        logger.debug("Gerando template para consulta criada: {}", evento.consultaId());
+        return gerarTemplateConsultaCriada(evento.pacienteNome(), evento.medicoNome(), 
+                                          evento.medicoEspecialidade(), evento.dataHora());
+    }
+    
+    /**
+     * Gera o template de notificação para consulta editada
+     */
+    public NotificacaoTemplate gerarTemplateConsultaEditada(ConsultaEditadaNotificacaoEvent evento) {
+        logger.debug("Gerando template para consulta editada: {}", evento.consultaId());
+        return gerarTemplateConsultaEditada(evento.pacienteNome(), evento.medicoNome(), 
+                                           evento.medicoEspecialidade(), evento.novaDataHora());
     }
 
     /**
      * Template para consulta criada
      */
-    private NotificacaoTemplate gerarTemplateConsultaCriada(NotificacaoConsultaPayload payload) {
+    private NotificacaoTemplate gerarTemplateConsultaCriada(String pacienteNome, String medicoNome, 
+                                                           String medicoEspecialidade, java.time.LocalDateTime dataHora) {
         String titulo = "✅ Consulta Agendada com Sucesso";
         
         String mensagem = String.format("""
@@ -46,10 +51,7 @@ public class NotificacaoTemplateService {
             📅 Data: %s
             ⏰ Horário: %s
             👨‍⚕️ Médico: %s
-            📍 Local: %s
-            📞 Telefone da Clínica: %s
-            
-            %s
+            🏥 Especialidade: %s
             
             ⚠️ Importante:
             • Chegue com 15 minutos de antecedência
@@ -59,17 +61,13 @@ public class NotificacaoTemplateService {
             Em caso de dúvidas, entre em contato conosco.
             
             Atenciosamente,
-            Equipe %s
+            Equipe MedSync
             """,
-            payload.pacienteNome(),
-            payload.dataHora().format(DATE_FORMATTER),
-            payload.dataHora().format(DateTimeFormatter.ofPattern("HH:mm")),
-            payload.medicoNome(),
-            payload.clinicaNome(),
-            payload.clinicaTelefone(),
-            payload.observacoes() != null && !payload.observacoes().isEmpty() 
-                ? "📝 Observações: " + payload.observacoes() : "",
-            payload.clinicaNome()
+            pacienteNome,
+            dataHora.format(DATE_FORMATTER),
+            dataHora.format(DateTimeFormatter.ofPattern("HH:mm")),
+            medicoNome,
+            medicoEspecialidade != null ? medicoEspecialidade : "Não informada"
         );
 
         return new NotificacaoTemplate(titulo, mensagem, "CONSULTA_CRIADA");
@@ -78,7 +76,8 @@ public class NotificacaoTemplateService {
     /**
      * Template para consulta editada
      */
-    private NotificacaoTemplate gerarTemplateConsultaEditada(NotificacaoConsultaPayload payload) {
+    private NotificacaoTemplate gerarTemplateConsultaEditada(String pacienteNome, String medicoNome, 
+                                                           String medicoEspecialidade, java.time.LocalDateTime novaDataHora) {
         String titulo = "🔄 Consulta Atualizada";
         
         String mensagem = String.format("""
@@ -89,10 +88,7 @@ public class NotificacaoTemplateService {
             📅 Nova Data: %s
             ⏰ Novo Horário: %s
             👨‍⚕️ Médico: %s
-            📍 Local: %s
-            📞 Telefone da Clínica: %s
-            
-            %s
+            🏥 Especialidade: %s
             
             ⚠️ Importante:
             • Verifique os novos dados da consulta
@@ -100,136 +96,18 @@ public class NotificacaoTemplateService {
             • Em caso de dúvidas, entre em contato conosco
             
             Atenciosamente,
-            Equipe %s
+            Equipe MedSync
             """,
-            payload.pacienteNome(),
-            payload.dataHora().format(DATE_FORMATTER),
-            payload.dataHora().format(DateTimeFormatter.ofPattern("HH:mm")),
-            payload.medicoNome(),
-            payload.clinicaNome(),
-            payload.clinicaTelefone(),
-            payload.observacoes() != null && !payload.observacoes().isEmpty() 
-                ? "📝 Observações: " + payload.observacoes() : "",
-            payload.clinicaNome()
+            pacienteNome,
+            novaDataHora.format(DATE_FORMATTER),
+            novaDataHora.format(DateTimeFormatter.ofPattern("HH:mm")),
+            medicoNome,
+            medicoEspecialidade != null ? medicoEspecialidade : "Não informada"
         );
 
         return new NotificacaoTemplate(titulo, mensagem, "CONSULTA_EDITADA");
     }
 
-    /**
-     * Template para consulta cancelada
-     */
-    private NotificacaoTemplate gerarTemplateConsultaCancelada(NotificacaoConsultaPayload payload) {
-        String titulo = "❌ Consulta Cancelada";
-        
-        String mensagem = String.format("""
-            Olá, %s!
-            
-            Sua consulta foi cancelada:
-            
-            📅 Data: %s
-            ⏰ Horário: %s
-            👨‍⚕️ Médico: %s
-            
-            %s
-            
-            Para reagendar sua consulta, entre em contato conosco:
-            📞 %s
-            
-            Atenciosamente,
-            Equipe %s
-            """,
-            payload.pacienteNome(),
-            payload.dataHora().format(DATE_FORMATTER),
-            payload.dataHora().format(DateTimeFormatter.ofPattern("HH:mm")),
-            payload.medicoNome(),
-            payload.observacoes() != null && !payload.observacoes().isEmpty() 
-                ? "📝 Motivo: " + payload.observacoes() : "",
-            payload.clinicaTelefone(),
-            payload.clinicaNome()
-        );
-
-        return new NotificacaoTemplate(titulo, mensagem, "CONSULTA_CANCELADA");
-    }
-
-    /**
-     * Template para lembrete de consulta
-     */
-    private NotificacaoTemplate gerarTemplateLembrete(NotificacaoConsultaPayload payload) {
-        String titulo = "⏰ Lembrete: Sua Consulta é Amanhã";
-        
-        String mensagem = String.format("""
-            Olá, %s!
-            
-            Este é um lembrete da sua consulta:
-            
-            📅 Data: %s
-            ⏰ Horário: %s
-            👨‍⚕️ Médico: %s
-            📍 Local: %s
-            📞 Telefone da Clínica: %s
-            
-            %s
-            
-            ⚠️ Lembre-se:
-            • Chegue com 15 minutos de antecedência
-            • Traga um documento com foto
-            • Em caso de desistência, cancele imediatamente
-            
-            Esperamos vê-lo(a)!
-            
-            Atenciosamente,
-            Equipe %s
-            """,
-            payload.pacienteNome(),
-            payload.dataHora().format(DATE_FORMATTER),
-            payload.dataHora().format(DateTimeFormatter.ofPattern("HH:mm")),
-            payload.medicoNome(),
-            payload.clinicaNome(),
-            payload.clinicaTelefone(),
-            payload.observacoes() != null && !payload.observacoes().isEmpty() 
-                ? "📝 Observações: " + payload.observacoes() : "",
-            payload.clinicaNome()
-        );
-
-        return new NotificacaoTemplate(titulo, mensagem, "LEMBRETE");
-    }
-
-    /**
-     * Template genérico para outros tipos de evento
-     */
-    private NotificacaoTemplate gerarTemplateGenerico(NotificacaoConsultaPayload payload) {
-        String titulo = "📋 Notificação de Consulta";
-        
-        String mensagem = String.format("""
-            Olá, %s!
-            
-            Você recebeu uma notificação sobre sua consulta:
-            
-            📅 Data: %s
-            ⏰ Horário: %s
-            👨‍⚕️ Médico: %s
-            📍 Local: %s
-            
-            %s
-            
-            Para mais informações, entre em contato conosco.
-            
-            Atenciosamente,
-            Equipe %s
-            """,
-            payload.pacienteNome(),
-            payload.dataHora().format(DATE_FORMATTER),
-            payload.dataHora().format(DateTimeFormatter.ofPattern("HH:mm")),
-            payload.medicoNome(),
-            payload.clinicaNome(),
-            payload.observacoes() != null && !payload.observacoes().isEmpty() 
-                ? "📝 Observações: " + payload.observacoes() : "",
-            payload.clinicaNome()
-        );
-
-        return new NotificacaoTemplate(titulo, mensagem, "GENERICO");
-    }
 
     /**
      * Record para representar um template de notificação

@@ -1,5 +1,6 @@
 package com.medsync.notificacao.presentation.dto;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -12,4 +13,4 @@ public record NotificacaoRequest(
     String titulo,
     String mensagem,
     LocalDateTime timestamp
-) {}
+) implements Serializable {}
