@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,7 +30,7 @@ public class NotificacaoService {
     private String routingKeyCliente;
     
     public NotificacaoService(RabbitTemplate rabbitTemplate,
-                             EmailService emailService, 
+                             @Lazy EmailService emailService, 
                              NotificacaoTemplateService templateService,
                              CadastroServiceClient cadastroServiceClient) {
         this.rabbitTemplate = rabbitTemplate;
@@ -52,7 +53,11 @@ public class NotificacaoService {
             NotificacaoRequest notificacao = new NotificacaoRequest(
                 evento.consultaId(),
                 dadosCompletos.pacienteNome() != null ? dadosCompletos.pacienteNome() : "Paciente",
+                dadosCompletos.pacienteEmail() != null ? dadosCompletos.pacienteEmail() : "",
+                dadosCompletos.pacienteTelefone() != null ? dadosCompletos.pacienteTelefone() : "",
                 dadosCompletos.medicoNome() != null ? dadosCompletos.medicoNome() : "Médico",
+                dadosCompletos.medicoEmail() != null ? dadosCompletos.medicoEmail() : "",
+                dadosCompletos.medicoTelefone() != null ? dadosCompletos.medicoTelefone() : "",
                 evento.dataHora(),
                 template.tipoNotificacao(),
                 template.titulo(),
@@ -88,7 +93,11 @@ public class NotificacaoService {
             NotificacaoRequest notificacao = new NotificacaoRequest(
                 evento.consultaId(),
                 dadosCompletos.pacienteNome() != null ? dadosCompletos.pacienteNome() : "Paciente",
+                dadosCompletos.pacienteEmail() != null ? dadosCompletos.pacienteEmail() : "",
+                dadosCompletos.pacienteTelefone() != null ? dadosCompletos.pacienteTelefone() : "",
                 dadosCompletos.medicoNome() != null ? dadosCompletos.medicoNome() : "Médico",
+                dadosCompletos.medicoEmail() != null ? dadosCompletos.medicoEmail() : "",
+                dadosCompletos.medicoTelefone() != null ? dadosCompletos.medicoTelefone() : "",
                 evento.dataHora(),
                 template.tipoNotificacao(),
                 template.titulo(),

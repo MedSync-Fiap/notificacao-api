@@ -6,7 +6,11 @@ import java.util.UUID;
 public record NotificacaoRequest(
     UUID consultaId,
     String pacienteNome,
+    String pacienteEmail,
+    String pacienteTelefone,
     String medicoNome,
+    String medicoEmail,
+    String medicoTelefone,
     LocalDateTime dataHora,
     String tipoNotificacao, // "CONSULTA_CRIADA", "CONSULTA_EDITADA", "LEMBRETE"
     String titulo,

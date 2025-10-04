@@ -15,7 +15,7 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME:}
+    username: ${MAIL_USERNAME:arthurgf.dev@gmail.com}
     password: ${MAIL_PASSWORD:}
     properties:
       mail:
@@ -23,6 +23,9 @@ spring:
           auth: true
           starttls:
             enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
 
 server:
   port: 8082
@@ -54,6 +57,11 @@ logging:
 app:
   name: medsync-notificacao-service
   version: 1.0.0
+  services:
+    agendamento:
+      url: http://localhost:8080
+    historico:
+      url: http://localhost:8081
   rabbitmq:
     exchange-notificacoes: ex_notificacoes
     queue-notificacoes: q_notificacoes_consultas
@@ -62,15 +70,13 @@ app:
     routing-key-cliente: notificacao.cliente.*
   
   notificacao:
+    email:
+      enabled: ${EMAIL_ENABLED:true}
+      from-name: ${EMAIL_FROM_NAME:MedSync}
+      retry-attempts: ${EMAIL_RETRY_ATTEMPTS:3}
     lembrete-horas: [24, 2, 1]  # Horas antes da consulta para enviar lembrete
     template-path: classpath:/templates/email/
   
-  # URLs dos outros microsserviços
-  services:
-    agendamento:
-      url: http://localhost:8080  # Serviço de Agendamento
-    historico:
-      url: http://localhost:8081  # Serviço de Histórico
 
 ---
 # Development Profile
@@ -80,16 +86,20 @@ spring:
       on-profile: dev
   
   mail:
-    host: localhost
-    port: 1025
-    username: 
-    password: 
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:arthurgf.dev@gmail.com}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
-          auth: false
+          auth: true
           starttls:
-            enable: false
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
 
 logging:
   level:
