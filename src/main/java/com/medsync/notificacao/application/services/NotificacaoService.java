@@ -1,6 +1,7 @@
 package com.medsync.notificacao.application.services;
 
-import com.medsync.notificacao.domain.events.ConsultaNotificacaoEvent;
+import com.medsync.notificacao.domain.events.ConsultaCriadaNotificacaoEvent;
+import com.medsync.notificacao.domain.events.ConsultaEditadaNotificacaoEvent;
 import com.medsync.notificacao.infrastructure.clients.CadastroServiceClient;
 import com.medsync.notificacao.infrastructure.events.dto.NotificacaoConsultaPayload;
 import com.medsync.notificacao.presentation.dto.NotificacaoRequest;
@@ -23,8 +24,8 @@ public class NotificacaoService {
     private final NotificacaoTemplateService templateService;
     private final CadastroServiceClient cadastroServiceClient;
     
-    @Value("${app.rabbitmq.exchange-notificacoes}")
-    private String exchangeNotificacoes;
+    @Value("${app.rabbitmq.exchange-consultas}")
+    private String exchangeConsultas;
     
     @Value("${app.rabbitmq.routing-key-cliente}")
     private String routingKeyCliente;
@@ -39,17 +40,14 @@ public class NotificacaoService {
         this.cadastroServiceClient = cadastroServiceClient;
     }
     
-    public void processarConsultaCriada(ConsultaNotificacaoEvent evento) {
+    public void processarConsultaCriada(ConsultaCriadaNotificacaoEvent evento) {
         try {
             logger.info("Processando notificação de consulta criada: {}", evento.consultaId());
             
-            // Buscar dados completos do paciente e médico
-            var dadosCompletos = buscarDadosCompletos(evento);
-            
             // Gerar template personalizado
-            var template = templateService.gerarTemplate(dadosCompletos);
+            var template = templateService.gerarTemplateConsultaCriada(evento);
             
-            // Criar notificação com dados completos
+            // Criar notificação com dados do evento
             NotificacaoRequest notificacao = new NotificacaoRequest(
                 evento.consultaId(),
                 dadosCompletos.pacienteNome() != null ? dadosCompletos.pacienteNome() : "Paciente",
@@ -67,7 +65,7 @@ public class NotificacaoService {
             
             // Enviar notificação para fila específica do cliente
             String routingKey = "notificacao.cliente." + evento.consultaId();
-            rabbitTemplate.convertAndSend(exchangeNotificacoes, routingKey, notificacao);
+            rabbitTemplate.convertAndSend(exchangeConsultas, routingKey, notificacao);
             
             // Enviar email (se configurado)
             emailService.enviarEmailConsultaCriada(notificacao);
@@ -79,17 +77,14 @@ public class NotificacaoService {
         }
     }
     
-    public void processarConsultaEditada(ConsultaNotificacaoEvent evento) {
+    public void processarConsultaEditada(ConsultaEditadaNotificacaoEvent evento) {
         try {
             logger.info("Processando notificação de consulta editada: {}", evento.consultaId());
             
-            // Buscar dados completos do paciente e médico
-            var dadosCompletos = buscarDadosCompletos(evento);
-            
             // Gerar template personalizado
-            var template = templateService.gerarTemplate(dadosCompletos);
+            var template = templateService.gerarTemplateConsultaEditada(evento);
             
-            // Criar notificação com dados completos
+            // Criar notificação com dados do evento
             NotificacaoRequest notificacao = new NotificacaoRequest(
                 evento.consultaId(),
                 dadosCompletos.pacienteNome() != null ? dadosCompletos.pacienteNome() : "Paciente",
@@ -107,7 +102,7 @@ public class NotificacaoService {
             
             // Enviar notificação para fila específica do cliente
             String routingKey = "notificacao.cliente." + evento.consultaId();
-            rabbitTemplate.convertAndSend(exchangeNotificacoes, routingKey, notificacao);
+            rabbitTemplate.convertAndSend(exchangeConsultas, routingKey, notificacao);
             
             // Enviar email (se configurado)
             emailService.enviarEmailConsultaEditada(notificacao);
@@ -119,48 +114,4 @@ public class NotificacaoService {
         }
     }
     
-    /**
-     * Busca dados completos do paciente, médico e clínica
-     */
-    private NotificacaoConsultaPayload buscarDadosCompletos(ConsultaNotificacaoEvent evento) {
-        logger.debug("Buscando dados completos para consulta: {}", evento.consultaId());
-        
-        // Buscar dados do paciente
-        var paciente = cadastroServiceClient.buscarPaciente(evento.pacienteId());
-        
-        // Buscar dados do médico
-        var medico = cadastroServiceClient.buscarMedico(evento.medicoId());
-        
-        
-        // Criar payload com dados completos
-        return new NotificacaoConsultaPayload(
-            evento.consultaId(),
-            evento.pacienteId(),
-            evento.medicoId(),
-            evento.criadoPorId(),
-            evento.dataHora(),
-            evento.status(),
-            evento.observacoes(),
-            evento.tipoEvento(),
-            evento.timestamp(),
-            
-            // Dados do paciente
-            paciente != null ? paciente.nome() : "Paciente",
-            paciente != null ? paciente.email() : null,
-            paciente != null && paciente.telefones() != null && !paciente.telefones().isEmpty() 
-                ? paciente.telefones().get(0).numero() : null,
-            paciente != null ? paciente.cpf() : null,
-            
-            // Dados do médico
-            medico != null ? medico.nome() : "Médico",
-            medico != null ? medico.email() : null,
-            medico != null && medico.telefones() != null && !medico.telefones().isEmpty() 
-                ? medico.telefones().get(0).numero() : null,
-            
-            // Dados da clínica (valores padrão)
-            "MedSync Clínica",
-            "Endereço não informado",
-            "(11) 99999-9999"
-        );
-    }
 }
