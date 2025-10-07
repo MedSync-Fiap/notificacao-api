@@ -5,10 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * DTO para receber eventos de consulta do serviço de Agendamento.
- * Compatível com o pacote cadastroagendamento.infrastructure.events.dto.NotificacaoConsultaPayload
- */
 public record NotificacaoConsultaPayload(
     @JsonProperty("consultaId") UUID consultaId,
     @JsonProperty("pacienteId") UUID pacienteId,

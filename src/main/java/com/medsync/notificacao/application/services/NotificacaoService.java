@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class NotificacaoService {
@@ -44,30 +45,26 @@ public class NotificacaoService {
         try {
             logger.info("Processando notificação de consulta criada: {}", evento.consultaId());
             
-            // Gerar template personalizado
             var template = templateService.gerarTemplateConsultaCriada(evento);
             
-            // Criar notificação com dados do evento
             NotificacaoRequest notificacao = new NotificacaoRequest(
-                evento.consultaId(),
-                dadosCompletos.pacienteNome() != null ? dadosCompletos.pacienteNome() : "Paciente",
-                dadosCompletos.pacienteEmail() != null ? dadosCompletos.pacienteEmail() : "",
-                dadosCompletos.pacienteTelefone() != null ? dadosCompletos.pacienteTelefone() : "",
-                dadosCompletos.medicoNome() != null ? dadosCompletos.medicoNome() : "Médico",
-                dadosCompletos.medicoEmail() != null ? dadosCompletos.medicoEmail() : "",
-                dadosCompletos.medicoTelefone() != null ? dadosCompletos.medicoTelefone() : "",
-                evento.dataHora(),
+                UUID.fromString(evento.consultaId()),
+                evento.pacienteNome() != null ? evento.pacienteNome() : "Paciente",
+                evento.pacienteEmail() != null ? evento.pacienteEmail() : "",
+                evento.pacienteTelefone() != null ? evento.pacienteTelefone() : "",
+                evento.medicoNome() != null ? evento.medicoNome() : "Médico",
+                evento.medicoEmail() != null ? evento.medicoEmail() : "",
+                evento.medicoTelefone() != null ? evento.medicoTelefone() : "",
+                LocalDateTime.parse(evento.dataHora()),
                 template.tipoNotificacao(),
                 template.titulo(),
                 template.mensagem(),
                 LocalDateTime.now()
             );
             
-            // Enviar notificação para fila específica do cliente
             String routingKey = "notificacao.cliente." + evento.consultaId();
             rabbitTemplate.convertAndSend(exchangeConsultas, routingKey, notificacao);
             
-            // Enviar email (se configurado)
             emailService.enviarEmailConsultaCriada(notificacao);
             
             logger.info("Notificação de consulta criada processada com sucesso: {}", evento.consultaId());
@@ -81,30 +78,26 @@ public class NotificacaoService {
         try {
             logger.info("Processando notificação de consulta editada: {}", evento.consultaId());
             
-            // Gerar template personalizado
             var template = templateService.gerarTemplateConsultaEditada(evento);
             
-            // Criar notificação com dados do evento
             NotificacaoRequest notificacao = new NotificacaoRequest(
-                evento.consultaId(),
-                dadosCompletos.pacienteNome() != null ? dadosCompletos.pacienteNome() : "Paciente",
-                dadosCompletos.pacienteEmail() != null ? dadosCompletos.pacienteEmail() : "",
-                dadosCompletos.pacienteTelefone() != null ? dadosCompletos.pacienteTelefone() : "",
-                dadosCompletos.medicoNome() != null ? dadosCompletos.medicoNome() : "Médico",
-                dadosCompletos.medicoEmail() != null ? dadosCompletos.medicoEmail() : "",
-                dadosCompletos.medicoTelefone() != null ? dadosCompletos.medicoTelefone() : "",
-                evento.dataHora(),
+                UUID.fromString(evento.consultaId()),
+                evento.pacienteNome() != null ? evento.pacienteNome() : "Paciente",
+                evento.pacienteEmail() != null ? evento.pacienteEmail() : "",
+                evento.pacienteTelefone() != null ? evento.pacienteTelefone() : "",
+                evento.medicoNome() != null ? evento.medicoNome() : "Médico",
+                evento.medicoEmail() != null ? evento.medicoEmail() : "",
+                evento.medicoTelefone() != null ? evento.medicoTelefone() : "",
+                LocalDateTime.parse(evento.novaDataHora()),
                 template.tipoNotificacao(),
                 template.titulo(),
                 template.mensagem(),
                 LocalDateTime.now()
             );
             
-            // Enviar notificação para fila específica do cliente
             String routingKey = "notificacao.cliente." + evento.consultaId();
             rabbitTemplate.convertAndSend(exchangeConsultas, routingKey, notificacao);
             
-            // Enviar email (se configurado)
             emailService.enviarEmailConsultaEditada(notificacao);
             
             logger.info("Notificação de consulta editada processada com sucesso: {}", evento.consultaId());

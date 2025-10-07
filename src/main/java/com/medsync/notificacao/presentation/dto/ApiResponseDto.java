@@ -4,9 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-/**
- * DTO padrão para respostas da API
- */
 @Schema(description = "Resposta padrão da API")
 public record ApiResponseDto<T>(
     @Schema(description = "Indica se a operação foi bem-sucedida", example = "true")

@@ -37,9 +37,6 @@ public class EmailService {
         this.mailSender = mailSender;
     }
     
-    /**
-     * Envia email de consulta criada de forma assíncrona
-     */
     public void enviarEmailConsultaCriada(NotificacaoRequest notificacao) {
         logger.info("Verificando configuração de email - emailEnabled: {}, fromEmail: '{}'", emailEnabled, fromEmail);
         if (!emailEnabled || !StringUtils.hasText(fromEmail)) {
@@ -63,9 +60,6 @@ public class EmailService {
         });
     }
     
-    /**
-     * Envia email de consulta editada de forma assíncrona
-     */
     public void enviarEmailConsultaEditada(NotificacaoRequest notificacao) {
         if (!emailEnabled || !StringUtils.hasText(fromEmail)) {
             logger.debug("Envio de email desabilitado ou email não configurado");
@@ -88,9 +82,6 @@ public class EmailService {
         });
     }
     
-    /**
-     * Envia email de lembrete de forma assíncrona
-     */
     public void enviarEmailLembrete(NotificacaoRequest notificacao) {
         if (!emailEnabled || !StringUtils.hasText(fromEmail)) {
             logger.debug("Envio de email desabilitado ou email não configurado");
@@ -113,9 +104,6 @@ public class EmailService {
         });
     }
     
-    /**
-     * Envia email com retry automático
-     */
     private void enviarEmailComRetry(String to, String subject, String htmlContent, String tipoEvento, String consultaId) {
         int tentativas = 0;
         Exception ultimoErro = null;
@@ -147,9 +135,6 @@ public class EmailService {
             tipoEvento, retryAttempts, consultaId, ultimoErro != null ? ultimoErro.getMessage() : "Erro desconhecido");
     }
     
-    /**
-     * Envia email HTML
-     */
     private void enviarEmail(String to, String subject, String htmlContent) throws MessagingException {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -166,9 +151,6 @@ public class EmailService {
         }
     }
     
-    /**
-     * Gera template HTML responsivo para email
-     */
     private String gerarTemplateEmailHtml(NotificacaoRequest notificacao, String tipoEvento) {
         String corPrimaria = getCorPorTipoEvento(tipoEvento);
         String icone = getIconePorTipoEvento(tipoEvento);

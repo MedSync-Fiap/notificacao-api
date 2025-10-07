@@ -108,7 +108,6 @@ class NotificacaoIntegrationTest {
         CountDownLatch messageLatch = new CountDownLatch(1);
         final Message[] receivedMessage = {null};
 
-        // Configurar listener para capturar mensagem enviada para fila de cliente
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(rabbitTemplate.getConnectionFactory());
         container.setQueueNames("q_notificacoes_cliente");
@@ -155,7 +154,6 @@ class NotificacaoIntegrationTest {
         CountDownLatch messageLatch = new CountDownLatch(1);
         final Message[] receivedMessage = {null};
 
-        // Configurar listener para capturar mensagem enviada para fila de cliente
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(rabbitTemplate.getConnectionFactory());
         container.setQueueNames("q_notificacoes_cliente");
@@ -203,7 +201,6 @@ class NotificacaoIntegrationTest {
         CountDownLatch messageLatch = new CountDownLatch(1);
         final Message[] receivedMessage = {null};
 
-        // Configurar listener para capturar mensagem enviada para fila de cliente
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(rabbitTemplate.getConnectionFactory());
         container.setQueueNames("q_notificacoes_cliente");

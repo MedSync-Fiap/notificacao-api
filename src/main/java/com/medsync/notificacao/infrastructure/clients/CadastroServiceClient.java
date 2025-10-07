@@ -14,9 +14,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Cliente HTTP para integração com o serviço de Cadastro
- */
 @Component
 public class CadastroServiceClient {
 
@@ -31,9 +28,6 @@ public class CadastroServiceClient {
         this.cadastroServiceUrl = agendamentoServiceUrl;
     }
 
-    /**
-     * Busca dados completos do paciente
-     */
     public UserResponse buscarPaciente(UUID pacienteId) {
         try {
             logger.debug("Buscando dados do paciente: {}", pacienteId);
@@ -62,9 +56,6 @@ public class CadastroServiceClient {
         }
     }
 
-    /**
-     * Busca dados completos do médico
-     */
     public UserResponse buscarMedico(UUID medicoId) {
         try {
             logger.debug("Buscando dados do médico: {}", medicoId);
@@ -93,9 +84,6 @@ public class CadastroServiceClient {
         }
     }
 
-    /**
-     * DTO para resposta do paciente
-     */
     public record UserResponse(
         UUID id,
         String nome,

@@ -6,11 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
-/**
- * Serviço responsável por gerar templates de notificação personalizados
- */
 @Service
 public class NotificacaoTemplateService {
 
@@ -18,29 +17,21 @@ public class NotificacaoTemplateService {
     
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    /**
-     * Gera o template de notificação para consulta criada
-     */
     public NotificacaoTemplate gerarTemplateConsultaCriada(ConsultaCriadaNotificacaoEvent evento) {
         logger.debug("Gerando template para consulta criada: {}", evento.consultaId());
         return gerarTemplateConsultaCriada(evento.pacienteNome(), evento.medicoNome(), 
-                                          evento.medicoEspecialidade(), evento.dataHora());
+                                          evento.medicoEspecialidade(), LocalDateTime.parse(evento.dataHora()), evento.observacoes());
     }
     
-    /**
-     * Gera o template de notificação para consulta editada
-     */
     public NotificacaoTemplate gerarTemplateConsultaEditada(ConsultaEditadaNotificacaoEvent evento) {
         logger.debug("Gerando template para consulta editada: {}", evento.consultaId());
         return gerarTemplateConsultaEditada(evento.pacienteNome(), evento.medicoNome(), 
-                                           evento.medicoEspecialidade(), evento.novaDataHora());
+                                           evento.medicoEspecialidade(), evento.novaDataHora(), 
+                                           evento.observacoes(), evento.alteracoes());
     }
 
-    /**
-     * Template para consulta criada
-     */
     private NotificacaoTemplate gerarTemplateConsultaCriada(String pacienteNome, String medicoNome, 
-                                                           String medicoEspecialidade, java.time.LocalDateTime dataHora) {
+                                                           String medicoEspecialidade, java.time.LocalDateTime dataHora, String observacoes) {
         String titulo = "✅ Consulta Agendada com Sucesso";
         
         String mensagem = String.format("""
@@ -52,6 +43,7 @@ public class NotificacaoTemplateService {
             ⏰ Horário: %s
             👨‍⚕️ Médico: %s
             🏥 Especialidade: %s
+            %s
             
             ⚠️ Importante:
             • Chegue com 15 minutos de antecedência
@@ -67,28 +59,65 @@ public class NotificacaoTemplateService {
             dataHora.format(DATE_FORMATTER),
             dataHora.format(DateTimeFormatter.ofPattern("HH:mm")),
             medicoNome,
-            medicoEspecialidade != null ? medicoEspecialidade : "Não informada"
+            medicoEspecialidade != null ? medicoEspecialidade : "Não informada",
+            observacoes != null && !observacoes.trim().isEmpty() ? 
+                "📝 Observações: " + observacoes + "\n" : ""
         );
 
         return new NotificacaoTemplate(titulo, mensagem, "CONSULTA_CRIADA");
     }
 
-    /**
-     * Template para consulta editada
-     */
     private NotificacaoTemplate gerarTemplateConsultaEditada(String pacienteNome, String medicoNome, 
-                                                           String medicoEspecialidade, java.time.LocalDateTime novaDataHora) {
+                                                           String medicoEspecialidade, String novaDataHora, 
+                                                           String observacoes, Map<String, Object> alteracoes) {
         String titulo = "🔄 Consulta Atualizada";
+        
+        // Construir mensagem apenas com campos alterados
+        StringBuilder camposAlterados = new StringBuilder();
+        
+        if (alteracoes != null && !alteracoes.isEmpty()) {
+            camposAlterados.append("Os seguintes dados foram alterados:\n\n");
+            
+            if (alteracoes.containsKey("dataHora")) {
+                LocalDateTime dataHora = LocalDateTime.parse(novaDataHora);
+                camposAlterados.append(String.format("📅 Nova Data: %s\n", dataHora.format(DATE_FORMATTER)));
+                camposAlterados.append(String.format("⏰ Novo Horário: %s\n", dataHora.format(DateTimeFormatter.ofPattern("HH:mm"))));
+            }
+            
+            if (alteracoes.containsKey("observacoes")) {
+                camposAlterados.append(String.format("📝 Observações: %s\n", 
+                    observacoes != null && !observacoes.trim().isEmpty() ? observacoes : "Removidas"));
+            }
+            
+            if (alteracoes.containsKey("status")) {
+                String status = alteracoes.get("status").toString();
+                String statusFormatado = formatarStatus(status);
+                camposAlterados.append(String.format("📊 Status: %s\n", statusFormatado));
+            }
+            
+            if (alteracoes.containsKey("especialidadeId")) {
+                camposAlterados.append(String.format("🏥 Especialidade: %s\n", 
+                    medicoEspecialidade != null ? medicoEspecialidade : "Não informada"));
+            }
+        } else {
+            // Fallback se não houver informações de alterações
+            if (novaDataHora != null && !novaDataHora.trim().isEmpty()) {
+                LocalDateTime dataHora = LocalDateTime.parse(novaDataHora);
+                camposAlterados.append("📅 Data: ").append(dataHora.format(DATE_FORMATTER)).append("\n");
+                camposAlterados.append("⏰ Horário: ").append(dataHora.format(DateTimeFormatter.ofPattern("HH:mm"))).append("\n");
+            }
+            if (observacoes != null && !observacoes.trim().isEmpty()) {
+                camposAlterados.append("📝 Observações: ").append(observacoes).append("\n");
+            }
+        }
         
         String mensagem = String.format("""
             Olá, %s!
             
             Sua consulta foi atualizada:
             
-            📅 Nova Data: %s
-            ⏰ Novo Horário: %s
+            %s
             👨‍⚕️ Médico: %s
-            🏥 Especialidade: %s
             
             ⚠️ Importante:
             • Verifique os novos dados da consulta
@@ -99,19 +128,25 @@ public class NotificacaoTemplateService {
             Equipe MedSync
             """,
             pacienteNome,
-            novaDataHora.format(DATE_FORMATTER),
-            novaDataHora.format(DateTimeFormatter.ofPattern("HH:mm")),
-            medicoNome,
-            medicoEspecialidade != null ? medicoEspecialidade : "Não informada"
+            camposAlterados.toString(),
+            medicoNome
         );
 
         return new NotificacaoTemplate(titulo, mensagem, "CONSULTA_EDITADA");
     }
+    
+    private String formatarStatus(String status) {
+        return switch (status.toUpperCase()) {
+            case "AGENDADA" -> "🟢 Agendada";
+            case "CONFIRMADA" -> "✅ Confirmada";
+            case "CANCELADA" -> "❌ Cancelada";
+            case "REALIZADA" -> "✅ Realizada";
+            case "INATIVA" -> "⏸️ Inativa";
+            default -> "📋 " + status;
+        };
+    }
 
 
-    /**
-     * Record para representar um template de notificação
-     */
     public record NotificacaoTemplate(
         String titulo,
         String mensagem,

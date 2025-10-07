@@ -23,12 +23,10 @@ public class NotificacaoEventListener {
     @RabbitListener(queues = "${app.rabbitmq.queue-notificacoes}")
     public void handleConsultaNotificacao(org.springframework.amqp.core.Message message) {
         try {
-            // Extrair o corpo da mensagem como String
             String messageBody = new String(message.getBody());
             logger.info("Recebida mensagem de notificação: {}", messageBody);
             logger.debug("Headers da mensagem: {}", message.getMessageProperties().getHeaders());
             
-            // Tentar deserializar a mensagem baseado no tipo de evento
             String evento = extractEventType(messageBody);
             
             switch (evento) {
